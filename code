@@ -1,0 +1,261 @@
+import java.util.Scanner;
+
+public class Main {
+
+    static final int MAX = 20;
+
+    static int[] doctorId = new int[MAX];
+    static String[] doctorName = new String[MAX];
+    static int doctorCount = 0;
+
+    static int[] patientId = new int[MAX];
+    static String[] patientName = new String[MAX];
+    static int patientCount = 0;
+
+    static int[] appId = new int[MAX];
+    static int[] appDoctor = new int[MAX];
+    static int[] appPatient = new int[MAX];
+    static String[] date = new String[MAX];
+    static String[] time = new String[MAX];
+    static String[] status = new String[MAX];
+    static int appCount = 0;
+
+    static int[][] table = new int[MAX][MAX];
+
+    static Scanner sc = new Scanner(System.in);
+
+    // Methods and parameter passing
+    static void addDoctor(int id, String name) {
+        doctorId[doctorCount] = id;
+        doctorName[doctorCount++] = name;
+    }
+
+    static void addPatient(int id, String name) {
+        patientId[patientCount] = id;
+        patientName[patientCount++] = name;
+    }
+
+    static int findDoctor(int id) {
+        for (int i = 0; i < doctorCount; i++)
+            if (doctorId[i] == id) return i;
+        return -1;
+    }
+
+    static int findPatient(int id) {
+        for (int i = 0; i < patientCount; i++)
+            if (patientId[i] == id) return i;
+        return -1;
+    }
+
+    // Method overloading
+    static boolean search(int id) {
+        for (int i = 0; i < appCount; i++)
+            if (appId[i] == id) return true;
+        return false;
+    }
+
+    static boolean search(int doctor, String d, String t) {
+        for (int i = 0; i < appCount; i++)
+            if (appDoctor[i] == doctor &&
+                date[i].equals(d) && time[i].equals(t))
+                return true;
+        return false;
+    }
+
+    static void book(int id, int doctor, int patient,
+                     String d, String t) {
+
+        // Nested if
+        if (findDoctor(doctor) != -1) {
+            if (findPatient(patient) != -1) {
+
+                if (search(doctor, d, t)) {
+                    System.out.println("Doctor already booked.");
+                    return;
+                }
+
+                appId[appCount] = id;
+                appDoctor[appCount] = doctor;
+                appPatient[appCount] = patient;
+                date[appCount] = d;
+                time[appCount] = t;
+                status[appCount] = "Scheduled";
+
+                int p = findPatient(patient);
+                table[p][appCount] = id;
+
+                appCount++;
+
+                System.out.println("Appointment Scheduled.");
+            } else {
+                System.out.println("Invalid Patient ID.");
+            }
+        } else {
+            System.out.println("Invalid Doctor ID.");
+        }
+    }
+
+    static void cancel(int id) {
+        for (int i = 0; i < appCount; i++) {
+            if (appId[i] == id) {
+                status[i] = "Cancelled";
+                System.out.println("Appointment Cancelled.");
+                return;
+            }
+        }
+        System.out.println("Appointment Not Found.");
+    }
+
+    static void history(int id) {
+        if (findPatient(id) == -1) {
+            System.out.println("Patient Not Found.");
+            return;
+        }
+
+        for (int i = 0; i < appCount; i++) {
+            if (appPatient[i] == id) {
+                System.out.println(
+                    appId[i] + "  " + date[i] + "  "
+                    + time[i] + "  " + status[i]);
+            }
+        }
+    }
+
+    static int sum() {
+        int s = 0;
+        for (int i = 0; i < appCount; i++)
+            s += appId[i];
+        return s;
+    }
+
+    static int countScheduled() {
+        int c = 0;
+        for (int i = 0; i < appCount; i++)
+            if (status[i].equals("Scheduled")) c++;
+        return c;
+    }
+
+    // Recursion
+    static int count(int n) {
+        if (n == 0) return 0;
+        return 1 + count(n - 1);
+    }
+
+    public static void main(String[] args) {
+
+        addDoctor(1, "Ravi");
+        addDoctor(2, "Anil");
+        addPatient(101, "Rahul");
+        addPatient(102, "Priya");
+
+
+        int choice;
+
+        do {
+            System.out.println("\n1.Add Doctor");
+            System.out.println("2.Add Patient");
+            System.out.println("3.Book Appointment");
+            System.out.println("4.Cancel Appointment");
+            System.out.println("5.Patient History");
+            System.out.println("6.Search Appointment");
+            System.out.println("7.Statistics");
+            System.out.println("8.2-D Array");
+            System.out.println("9.Exit");
+            System.out.print("Choice: ");
+
+            choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+
+                case 1:
+                    System.out.print("ID: ");
+                    int dId = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Name: ");
+                    addDoctor(dId, sc.nextLine());
+                    break;
+
+                case 2:
+                    System.out.print("ID: ");
+                    int pId = sc.nextInt();
+                    sc.nextLine();
+                    System.out.print("Name: ");
+                    addPatient(pId, sc.nextLine());
+                    break;
+
+                case 3:
+                    System.out.print("Appointment ID: ");
+                    int aId = sc.nextInt();
+
+                    System.out.print("Doctor ID: ");
+                    int d = sc.nextInt();
+
+                    System.out.print("Patient ID: ");
+                    int p = sc.nextInt();
+                    sc.nextLine();
+
+                    System.out.print("Date: ");
+                    String dt = sc.nextLine();
+
+                    System.out.print("Time: ");
+                    String tm = sc.nextLine();
+
+                    book(aId, d, p, dt, tm);
+                    break;
+
+                case 4:
+                    System.out.print("Appointment ID: ");
+                    cancel(sc.nextInt());
+                    break;
+
+                case 5:
+                    System.out.print("Patient ID: ");
+                    history(sc.nextInt());
+                    break;
+
+                case 6:
+                    System.out.print("Appointment ID: ");
+                    if (search(sc.nextInt()))
+                        System.out.println("Found");
+                    else
+                        System.out.println("Not Found");
+                    break;
+
+                case 7:
+                    System.out.println("Total: " + appCount);
+                    System.out.println("Scheduled: " + countScheduled());
+                    System.out.println("Sum: " + sum());
+
+                    // Type casting
+                    double avg = appCount == 0 ? 0 :
+                            (double) sum() / appCount;
+
+                    System.out.println("Average: " + avg);
+                    System.out.println("Recursive Count: "
+                            + count(appCount));
+                    break;
+
+                case 8:
+                    for (int i = 0; i < patientCount; i++) {
+                        for (int j = 0; j < appCount; j++) {
+                            if (table[i][j] != 0)
+                                System.out.print(table[i][j] + " ");
+                        }
+                        System.out.println();
+                    }
+                    break;
+
+                case 9:
+                    System.out.println("Thank you!");
+                    break;
+
+                default:
+                    System.out.println("Invalid Choice.");
+            }
+
+        } while (choice != 9);
+
+        sc.close();
+    }
+}
