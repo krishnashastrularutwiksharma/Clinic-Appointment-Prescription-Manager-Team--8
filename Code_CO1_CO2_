@@ -1,0 +1,156 @@
+
+import java.io.*;
+import java.util.*;
+
+interface Payable { double fee(); }
+
+abstract class Person {
+    int id;
+    String name;
+    Person(int id, String name) { this.id=id; this.name=name; }
+    abstract String role();
+    String describe() { return role()+" #"+id+" - "+name; }
+}
+
+class Patient extends Person {
+    Patient(int id,String name){super(id,name);}
+    String role(){return "Patient";}
+}
+
+class Doctor extends Person implements Payable {
+    Doctor(int id,String name){super(id,name);}
+    String role(){return "Doctor";}
+    public double fee(){return 300;}
+}
+
+class Specialist extends Doctor {
+    String speciality;
+    Specialist(int id,String name,String s){
+        super(id,name); speciality=s;
+    }
+    String role(){return "Specialist("+speciality+")";}
+    public double fee(){return super.fee()+200;}
+}
+
+class Appointment {
+    int id,doctor,patient;
+    String date,time,status;
+    Appointment(int i,int d,int p,String dt,String t){
+        id=i; doctor=d; patient=p; date=dt; time=t;
+        status="Scheduled";
+    }
+    public String toString(){
+        return id+" "+date+" "+time+" "+status;
+    }
+}
+
+class ClinicException extends Exception {
+    ClinicException(String m){super(m);}
+}
+
+public class Main {
+    static ArrayList<Doctor> doctors=new ArrayList<>();
+    static ArrayList<Patient> patients=new ArrayList<>();
+    static ArrayList<Appointment> apps=new ArrayList<>();
+    static HashMap<Integer,ArrayList<String>> rx=new HashMap<>();
+    static Scanner sc=new Scanner(System.in);
+
+    static Doctor doctor(int id){
+        for(Doctor d:doctors) if(d.id==id)return d;
+        return null;
+    }
+    static Patient patient(int id){
+        for(Patient p:patients)if(p.id==id)return p;
+        return null;
+    }
+    static Appointment app(int id){
+        for(Appointment a:apps)if(a.id==id)return a;
+        return null;
+    }
+    static void book(int id,int d,int p,String date,String time)
+            throws ClinicException {
+        if(doctor(d)==null||patient(p)==null)
+            throw new ClinicException("Invalid ID");
+        if(app(id)!=null)throw new ClinicException("ID exists");
+        for(Appointment a:apps)
+            if(a.doctor==d&&a.date.equals(date)&&a.time.equals(time)
+                    &&a.status.equals("Scheduled"))
+                throw new ClinicException("Doctor already booked");
+        apps.add(new Appointment(id,d,p,date,time));
+        System.out.println("Appointment Scheduled");
+    }
+    static void save(){
+        try(PrintWriter w=new PrintWriter("clinic_data.txt")){
+            for(Doctor d:doctors)
+                w.println("D "+d.id+" "+d.name);
+            for(Patient p:patients)
+                w.println("P "+p.id+" "+p.name);
+            for(Appointment a:apps)
+                w.println("A "+a.id+" "+a.doctor+" "+a.patient+" "+
+                    a.date+" "+a.time+" "+a.status);
+        }catch(IOException e){System.out.println(e.getMessage());}
+    }
+    public static void main(String[] args){
+        doctors.add(new Doctor(1,"Ravi"));
+        doctors.add(new Specialist(2,"Anil","Cardiology"));
+        patients.add(new Patient(101,"Rahul"));
+        patients.add(new Patient(102,"Priya"));
+        int c=0;
+        do{
+            System.out.println("\n1.Add Doctor  2.Add Patient");
+            System.out.println("3.Book  4.Cancel  5.History");
+            System.out.println("6.Search  7.Statistics  8.Reports  9.Exit");
+            try{
+                c=Integer.parseInt(sc.nextLine());
+                switch(c){
+                    case 1:
+                        System.out.print("ID and Name: ");
+                        doctors.add(new Doctor(sc.nextInt(),sc.next()));
+                        sc.nextLine(); break;
+                    case 2:
+                        System.out.print("ID and Name: ");
+                        patients.add(new Patient(sc.nextInt(),sc.next()));
+                        sc.nextLine(); break;
+                    case 3:
+                        System.out.print("Appointment Doctor Patient IDs: ");
+                        int i=sc.nextInt(),d=sc.nextInt(),p=sc.nextInt();
+                        sc.nextLine();
+                        System.out.print("Date and Time: ");
+                        book(i,d,p,sc.next(),sc.nextLine().trim());
+                        break;
+                    case 4:
+                        System.out.print("Appointment ID: ");
+                        Appointment a=app(Integer.parseInt(sc.nextLine()));
+                        if(a==null)throw new ClinicException("Not found");
+                        a.status="Cancelled"; break;
+                    case 5:
+                        System.out.print("Patient ID: ");
+                        int pid=Integer.parseInt(sc.nextLine());
+                        for(Appointment x:apps)
+                            if(x.patient==pid)System.out.println(x);
+                        break;
+                    case 6:
+                        System.out.print("Appointment ID: ");
+                        System.out.println(app(Integer.parseInt(sc.nextLine()))!=null
+                            ?"Found":"Not Found"); break;
+                    case 7:
+                        System.out.println("Total: "+apps.size());
+                        System.out.println("Scheduled: "+
+                            apps.stream().filter(x->x.status.equals("Scheduled")).count());
+                        break;
+                    case 8:
+                        apps.stream().filter(x->x.status.equals("Scheduled"))
+                            .forEach(System.out::println);
+                        System.out.println("Revenue: "+apps.stream()
+                            .filter(x->x.status.equals("Scheduled"))
+                            .mapToDouble(x->doctor(x.doctor).fee()).sum());
+                        break;
+                    case 9: save(); break;
+                }
+            }catch(Exception e){
+                System.out.println("Error: "+e.getMessage());
+                sc.nextLine();
+            }
+        }while(c!=9);
+    }
+}
